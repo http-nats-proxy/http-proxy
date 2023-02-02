@@ -24,7 +24,7 @@ jobs:
 
       - name: Build
         run: |
-          mkdir target/bin
+          mkdir -p target/bin
           go build -ldflags '-s'  -o 'target/bin' -v ./...
 
 
