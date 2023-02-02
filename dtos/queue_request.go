@@ -53,8 +53,9 @@ func ConvertRequestToQueueRequestData(req *http.Request) (*QueueRequestData, err
 }
 
 type QueueRequest struct {
+	Kind      string
 	Data      QueueRequestData
-	Ctx       context.Context
+	ctx       context.Context
 	RequestId string
 }
 
@@ -69,7 +70,8 @@ func ConvertRequestToQueueRequest(req *http.Request) (*QueueRequest, error) {
 	}
 	return &QueueRequest{
 		Data:      *data,
-		Ctx:       req.Context(),
+		Kind:      "QueueRequestData",
+		ctx:       req.Context(),
 		RequestId: requestId,
 	}, nil
 

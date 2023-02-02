@@ -7,9 +7,11 @@ import (
 )
 
 func main() {
+	defer initLogging(0)()
 	// Hello world, the web server
-	server := h.NewEchoServer()
+	server := h.NewDelayedEchoServer(250)
 	http.HandleFunc("/", server.ServeHTTP)
-	log.Println("Listing for requests at http://localhost:8000/echo")
+	Info("Listing for requests", "url", "http://localhost:8000/echo")
 	log.Fatal(http.ListenAndServe(":8000", nil))
+
 }

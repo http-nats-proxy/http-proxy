@@ -67,7 +67,7 @@ func TestConvertRequestToQueueRequestPassesContext(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if response.Ctx.Value("some_key") != "some_value" {
-		t.Errorf("expected %s, got %s", "some_value", response.Ctx.Value("some_key"))
+	if response.ctx.Value("some_key") != "some_value" {
+		t.Errorf("expected %s, got %s", "some_value", response.ctx.Value("some_key"))
 	}
 }
