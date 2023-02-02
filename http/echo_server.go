@@ -9,18 +9,14 @@ import (
 	"net/http"
 )
 
-type Server struct {
+type EchoServer struct {
 }
 
-func NewServer() *Server {
-	return &Server{}
+func NewEchoServer() *EchoServer {
+	return &EchoServer{}
 }
 
-type ProxiesHttp interface {
-	ServeHTTP(w http.ResponseWriter, req *http.Request)
-}
-
-func (s Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (s EchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	_, span := otel.Tracer("helloHandler").Start(req.Context(), "Poll")
 	defer span.End()
 	response, err := dtos.ConvertRequestToQueueRequest(req)
