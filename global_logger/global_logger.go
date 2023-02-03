@@ -1,4 +1,4 @@
-package main
+package global_logger
 
 import (
 	"context"
@@ -13,54 +13,61 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"log"
 	"os"
-	"sync/atomic"
-	"unsafe"
 )
 
-// SetLogger overrides the globalLogger with l.
-//
-// To see Info messages use a logger with `l.V(1).Enabled() == true`
-// To see Debug messages use a logger with `l.V(5).Enabled() == true`.
-func SetLogger(l logr.Logger) {
-	atomic.StorePointer(&globalLogger, unsafe.Pointer(&l))
+type Logger interface {
+	Trace(msg string, keysAndValues ...interface{})
+	Debug(msg string, keysAndValues ...interface{})
+	Info(msg string, keysAndValues ...interface{})
+	Warning(msg string, keysAndValues ...interface{})
+	Error(err error, msg string, keysAndValues ...interface{})
 }
 
-func getLogger() logr.Logger {
-	return *(*logr.Logger)(atomic.LoadPointer(&globalLogger))
+type GlobalLogger struct {
+	logr.Logger
 }
 
-var globalLogger unsafe.Pointer
+func (l *GlobalLogger) Trace(msg string, keysAndValues ...interface{}) {
+	l.V(9).Info(msg, keysAndValues...)
+}
+
+func (l *GlobalLogger) Debug(msg string, keysAndValues ...interface{}) {
+	l.V(7).Info(msg, keysAndValues...)
+}
 
 // Info prints messages about the general state of the API or SDK.
 // This should usually be less then 5 messages a minute.
-func Info(msg string, keysAndValues ...interface{}) {
-	getLogger().V(1).Info(msg, keysAndValues...)
+func (l *GlobalLogger) Info(msg string, keysAndValues ...interface{}) {
+	l.V(3).Info(msg, keysAndValues...)
 }
 
-// Error prints messages about exceptional states of the API or SDK.
-func Error(err error, msg string, keysAndValues ...interface{}) {
-	getLogger().Error(err, msg, keysAndValues...)
+func (l *GlobalLogger) Warning(msg string, keysAndValues ...interface{}) {
+	l.V(1).Info(msg, keysAndValues...)
 }
 
-// Debug prints messages about all internal changes in the API or SDK.
-func Debug(msg string, keysAndValues ...interface{}) {
-	getLogger().V(5).Info(msg, keysAndValues...)
+type LoggingApp struct {
+	Ctx      context.Context
+	Logger   Logger
+	shutdown func(context.Context) error
 }
 
-func initLogging(v int) func() {
+func (a *LoggingApp) Close() error {
+	return a.shutdown(a.Ctx)
+}
+func InitLogging(v int) *LoggingApp {
 	ctx := context.Background()
 	logger := stdr.New(log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile))
+
 	stdr.SetVerbosity(v)
-	SetLogger(logger)
 	shutdown, err := installExportPipeline(ctx, logger)
 	if err != nil {
 		logger.Error(err, "failed to install export pipeline")
 		log.Fatal(err)
 	}
-	return func() {
-		if err := shutdown(ctx); err != nil {
-			log.Fatal(err)
-		}
+	return &LoggingApp{
+		Ctx:      ctx,
+		Logger:   &GlobalLogger{logger},
+		shutdown: shutdown,
 	}
 
 }

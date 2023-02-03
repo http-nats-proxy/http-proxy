@@ -59,6 +59,10 @@ type QueueRequest struct {
 	RequestId string
 }
 
+func (r QueueRequest) Context() context.Context {
+	return r.ctx
+
+}
 func ConvertRequestToQueueRequest(req *http.Request) (*QueueRequest, error) {
 	data, err := ConvertRequestToQueueRequestData(req)
 	if err != nil {
